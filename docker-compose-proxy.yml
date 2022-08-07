@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app:
+    env_file: variables.env
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+      - static_data:/vol/web
+    depends_on:
+      - db
+
+  proxy:
+    image: proxy:latest
+    depends_on:
+      - app
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_data:/vol/static
+
+  db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=supersecretpassword
+
+volumes:
+  static_data:
