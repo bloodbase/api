@@ -1,4 +1,4 @@
-# FMP API
+# Bloodbase API
 
 Written with [Django](https://www.djangoproject.com/) and [DRF](https://www.django-rest-framework.org/)
 
