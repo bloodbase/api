@@ -104,8 +104,8 @@ Replace the following variables:
 ```bash
 docker run -it \
     -e DB_HOST=<DB_HOST> \
-    -e DB_NAME=fmp \
-    -e DB_USER=fmpappuser \
+    -e DB_NAME=bloodbase \
+    -e DB_USER=bloodbaseappuser \
     -e DB_PASS=<DB_PASS> \
     <ECR_REPO>:latest \
     sh -c "python manage.py wait_for_db && python manage.py createsuperuser"
