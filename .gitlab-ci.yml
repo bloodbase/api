@@ -6,12 +6,6 @@ image:
 
 stages:
   - Test and Lint
-  - Build and Push
-  - Staging Plan
-  - Staging Apply
-  - Production Plan
-  - Production Apply
-  - Destroy
 
 Test and Lint:
   image: docker:20.10.8
@@ -36,74 +30,3 @@ Validate Terraform:
   rules:
     - if: "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(master|production)$/ || $CI_COMMIT_BRANCH =~ /^(master|production)$/"
 
-Build and Push:
-  image: docker:20.10.8
-  services:
-    - name: docker:dind
-      command: ["--mtu=1300"]
-  stage: Build and Push
-  script:
-    - apk add --no-cache python3 py3-pip
-    - pip3 install awscli
-    - docker build --compress -t $ECR_REPO:$CI_COMMIT_SHORT_SHA .
-    - $(aws ecr get-login --no-include-email --region us-east-1)
-    - docker push $ECR_REPO:$CI_COMMIT_SHORT_SHA
-    - docker tag $ECR_REPO:$CI_COMMIT_SHORT_SHA $ECR_REPO:latest
-    - docker push $ECR_REPO:latest
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^(master|production)$/"
-
-Staging Plan:
-  stage: Staging Plan
-  script:
-    - cd deploy/
-    - export TF_VAR_ecr_image_api=$ECR_REPO:$CI_COMMIT_SHORT_SHA
-    - terraform init
-    - terraform workspace select staging || terraform workspace new staging
-    - terraform plan
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^(master|production)$/"
-
-Staging Apply:
-  stage: Staging Apply
-  script:
-    - cd deploy/
-    - export TF_VAR_ecr_image_api=$ECR_REPO:$CI_COMMIT_SHORT_SHA
-    - terraform init
-    - terraform workspace select staging
-    - terraform apply -auto-approve
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^(master|production)$/"
-
-Production Plan:
-  stage: Production Plan
-  script:
-    - cd deploy/
-    - export TF_VAR_ecr_image_api=$ECR_REPO:$CI_COMMIT_SHORT_SHA
-    - terraform init
-    - terraform workspace select production || terraform workspace new production
-    - terraform plan
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "production"'
-
-Production Apply:
-  stage: Production Apply
-  script:
-    - cd deploy/
-    - export TF_VAR_ecr_image_api=$ECR_REPO:$CI_COMMIT_SHORT_SHA
-    - terraform init
-    - terraform workspace select production
-    - terraform apply -auto-approve
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "production"'
-
-Staging Destroy:
-  stage: Destroy
-  script:
-    - cd deploy/
-    - terraform init
-    - terraform workspace select staging
-    - terraform destroy -auto-approve
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^(master|production)$/"
-      when: manual
